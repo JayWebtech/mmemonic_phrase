@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/css/iziToast.min.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/js/iziToast.min.js"></script>
+  </head>
+  <body class="grid-background">
+    <div class="flex flex-col justify-center my-10">
+      <div class="container mx-auto px-4 sm:px-10 md:px-8 lg:px-16">
+        <div class="flex flex-col items-center">
+          <h2 class="text-4xl text-primary">Your Wallet</h2>
+          <p class="text-white fetch-details">
+            Fetching your wallet details...
+          </p>
+
+          <div id="loader" class="mt-5">
+            <svg class="animate-spin h-10 w-10 text-white" viewBox="0 0 24 24">
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="white"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="white"
+                d="M4 12a8 8 0 018-8v8H4z"
+              ></path>
+            </svg>
+          </div>
+
+          <div
+            id="walletContainer"
+            class="mt-5 w-full space-y-4 overflow-y-auto"
+          ></div>
+
+          <button
+            id="createAccountBtn"
+            class="bg-primary text-black rounded-md w-full lg:w-auto py-3 px-10 mt-5 cursor-pointer"
+            onclick="createNewAccount()"
+          >
+            Create New Account
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function fetchWallets() {
+        fetch("/fetch-wallets")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("loader").style.display = "none";
+            document.querySelector(".fetch-details").innerText =
+              "Your wallets are ready!";
+
+            if (Array.isArray(data)) {
+              data.forEach((wallet) => addWalletToPage(wallet));
+            } else {
+              addWalletToPage(data);
+            }
+
+            iziToast.success({
+              message: "Wallets fetched successfully!",
+              position: "topCenter",
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching wallets:", error);
+            iziToast.error({
+              message: "Failed to fetch wallets!",
+              position: "topCenter",
+            });
+          });
+      }
+
+      function addWalletToPage(wallet) {
+        const walletContainer = document.getElementById("walletContainer");
+
+        const walletHTML = `
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <p class="text-lg text-white"><strong>Public Address:</strong> ${wallet.address}</p>
+                    <p class="text-lg text-white"><strong>Private Key:</strong> ${wallet.privateKey}</p>
+                </div>
+            `;
+
+        walletContainer.innerHTML += walletHTML;
+      }
+
+      function createNewAccount() {
+        fetch("/new-account")
+          .then((response) => response.json())
+          .then((data) => {
+            if (Array.isArray(data)) {
+              data.forEach((wallet) => addWalletToPage(wallet));
+            } else {
+              addWalletToPage(data);
+            }
+
+            iziToast.success({
+              message: "Wallets created successfully!",
+              position: "topCenter",
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching wallets:", error);
+            iziToast.error({
+              message: "Failed to fetch wallets!",
+              position: "topCenter",
+            });
+          });
+      }
+
+      document.addEventListener("DOMContentLoaded", fetchWallets);
+    </script>
+  </body>
+</html>

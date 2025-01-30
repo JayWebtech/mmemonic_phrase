@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generate Wallet</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/css/iziToast.min.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/js/iziToast.min.js"></script>
+  </head>
+  <body>
+    <div class="grid-background h-screen flex flex-col justify-center">
+      <div class="container mx-auto px-4 sm:px-10 md:px-8 lg:px-16">
+        <div class="flex flex-col items-center">
+          <h2 class="text-4xl text-primary">Mnemonic Phrase</h2>
+          <p class="text-white">
+            Please make this confidential, do not share it to anyone
+          </p>
+          <input
+            type="text"
+            id="mnemonicPhrase"
+            value="<%= phrase.join(' ') %>"
+            hidden
+          />
+          <div
+            class="grid grid-cols-2 md:grid-cols-4 gap-4 border-2 border-[#333] backdrop-blur-md p-6 rounded-lg shadow-lg mt-10"
+          >
+            <% phrase.forEach((word, index) => { %>
+            <div class="p-3 bg-white rounded-md text-center">
+              <p class="text-lg font-semibold"><%= word %></p>
+            </div>
+            <% }); %>
+          </div>
+          <div class="flex gap-5">
+            <button
+              class="bg-primary text-black rounded-md w-full lg:w-auto py-3 px-10 mt-5 cursor-pointer"
+              onclick="copyPhrase()"
+            >
+              Copy Phrase
+            </button>
+            <a href="/dashboard">
+              <button
+                class="bg-primary text-black rounded-md w-full lg:w-auto py-3 px-10 mt-5 cursor-pointer"
+              >
+                Create Account
+              </button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function copyPhrase() {
+        var phraseInput = document.getElementById("mnemonicPhrase");
+
+        var tempTextarea = document.createElement("textarea");
+        tempTextarea.value = phraseInput.value;
+        document.body.appendChild(tempTextarea);
+
+        tempTextarea.select();
+        document.execCommand("copy");
+
+        document.body.removeChild(tempTextarea);
+
+        iziToast.success({
+          message: "Seed phrase copied successfully",
+          position: "topCenter",
+        });
+
+        setTimeout(() => {
+          successMessage.classList.add("hidden");
+        }, 2000);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+* {
+  font-family: "Unbounded";
+}
+.grid-background {
+  background-image: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 100px 100px;
+  background-color: #121212;
+}
+.text-primary{
+  color: #96EA63;
+}
+.bg-primary {
+  background-color: #96EA63;
+}

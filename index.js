@@ -1,53 +1,70 @@
-const wallet = require("ethers").Wallet;
-const readline = require("readline");
-const hdwallet = require("ethers").HDNodeWallet;
+const express = require("express");
+const app = express();
+const path = require("path");
+const port = 3030;
+const WalletFunctions = require("./wallet_class_functions");
+const fs = require("fs");
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+const walletManager = new WalletFunctions();
+
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.render("index", { title: "BlockHeader Wallet" });
 });
 
-let user_mmemonic;
-let user_wallets = [];
-
-const start = () => {
-  rl.question("Press Enter to generate Mnemonic Phrase...", () => {
-    generate_mnemonic();
+app.get("/generate-wallet", (req, res) => {
+  let phrase = walletManager.generate_mnemonic();
+  res.render("generate", {
+    title: "Generate Wallet",
+    phrase: phrase.split(" "),
   });
-};
+});
 
-const generate_mnemonic = () => {
-  const mnemonic = wallet.createRandom().mnemonic;
-  user_mmemonic = mnemonic.phrase;
-  console.log(`\nGenerated Mnemonic Phrase: \n${mnemonic.phrase}\n`);
-  ask_wallet_count();
-};
+app.get("/fetch-wallets", (req, res) => {
+  const walletIndex = walletManager.getWalletIndex();
 
-const ask_wallet_count = () => {
-  rl.question("Enter the number of wallets you need: ", (input) => {
-    const count = parseInt(input);
-    if (!isNaN(count) && count > 0) {
-      generate_wallet_account(count);
-    } else {
-      console.log("Please enter a valid number.");
-      ask_wallet_count();
-    }
-  });
-};
-
-const generate_wallet_account = (no_of_wallets) => {
-  for (let i = 0; i < no_of_wallets; i++) {
-    const path = `m/44'/60'/0'/0/${i}`;
-    const wallet_account = hdwallet.fromPhrase(user_mmemonic, "@Jaykosai", path);
-    user_wallets.push(wallet_account);
+  if (walletIndex === 0) {
+    walletManager.generate_wallet_account();
+    const wallets = walletManager.loadWallets();
+    res.json(wallets);
+  } else {
+    const wallets = walletManager.loadWallets();
+    res.json(wallets);
   }
-  console.log("\nGenerated Wallet Addresses:");
-  console.log(user_wallets);
-  user_wallets.forEach((wallet, index) => {
-    console.log(`${index + 1}: ${wallet.privateKey}`);
-  });
-  rl.close();
-};
+});
 
-console.log("Welcome to the Wallet Generator");
-start();
+app.get("/new-account", (req, res) => {
+  const newWallet = walletManager.generate_wallet_account();
+  res.json(newWallet);
+});
+
+app.get("/dashboard", (req, res) => {
+  res.render("dashboard");
+});
+
+app.get("/import", (req, res) => {
+  res.render("import");
+});
+
+app.post("/import-wallet", (req, res) => {
+  const { mnemonic } = req.body;
+  const wallet = walletManager.import_wallet(mnemonic);
+
+  console.log(wallet);
+  if (wallet) {
+    fs.writeFileSync("mnemonic.txt", mnemonic, "utf-8");
+    walletManager.saveWallet(wallet[0]);
+    res.json({ status: true });
+  } else {
+    res.json({ status: false });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});

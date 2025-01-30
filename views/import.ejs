@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Import Wallet</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/iziToast.min.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/js/iziToast.min.js"></script>
+  </head>
+  <body>
+    <div class="grid-background h-screen flex flex-col justify-center">
+      <div class="container mx-auto px-4 sm:px-10 md:px-8 lg:px-16">
+        <div class="flex flex-col items-center">
+          <h2 class="text-4xl text-primary">Import Wallet</h2>
+          <p class="text-white text-center my-5">
+            Click the Paste button or enter your 12-word mnemonic manually.
+          </p>
+
+          <div id="manualContainer" class="w-full mt-5 my-10">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <% for (let i = 0; i < 12; i++) { %>
+              <input
+                type="text"
+                class="mnemonic-word p-3 rounded-md text-black text-center border-2 bg-white border-[#111] outline-none"
+                placeholder="Word <%= i+1 %>"
+              />
+              <% } %>
+            </div>
+          </div>
+
+          <div class="flex gap-5">
+            <button
+              class="bg-primary text-black rounded-md w-full lg:w-auto py-3 px-10 mt-5 cursor-pointer"
+              onclick="pasteMnemonic()"
+            >
+              Paste
+            </button>
+            <button
+              class="bg-primary text-black rounded-md w-full lg:w-auto py-3 px-10 mt-5 cursor-pointer"
+              onclick="importWallet()"
+            >
+              Import Wallet
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      async function pasteMnemonic() {
+        try {
+          const text = await navigator.clipboard.readText();
+          let words = text.trim().split(/\s+/);
+
+          if (words.length !== 12) {
+            iziToast.error({
+              message: "Mnemonic must be exactly 12 words!",
+              position: "topCenter",
+            });
+            return;
+          }
+
+          let inputs = document.querySelectorAll(".mnemonic-word");
+          inputs.forEach((input, index) => {
+            input.value = words[index] || "";
+          });
+
+          iziToast.success({
+            message: "Mnemonic pasted successfully!",
+            position: "topCenter",
+          });
+        } catch (err) {
+          iziToast.error({
+            message: "Failed to access clipboard!",
+            position: "topCenter",
+          });
+          console.error("Error pasting mnemonic:", err);
+        }
+      }
+
+      function importWallet() {
+        let words = [];
+        document.querySelectorAll(".mnemonic-word").forEach((input) => {
+          words.push(input.value.trim());
+        });
+
+        let mnemonic = words.join(" ");
+
+        if (words.length !== 12 || words.some((word) => word === "")) {
+          iziToast.error({
+            message: "Mnemonic must be exactly 12 words!",
+            position: "topCenter",
+          });
+          return;
+        }
+        
+
+        fetch("/import-wallet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mnemonic }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status == true) {
+              iziToast.success({
+                message: "Wallet imported successfully!",
+                position: "topCenter",
+              });
+
+              setTimeout(() => {
+                window.location.href = "/dashboard";
+              }, 2000);
+            } else {
+              iziToast.error({
+                message: "Invalid mnemonic phrase!",
+                position: "topCenter",
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("Error importing wallet:", error);
+            iziToast.error({
+              message: "Failed to import wallet!",
+              position: "topCenter",
+            });
+          });
+      }
+    </script>
+  </body>
+</html>
